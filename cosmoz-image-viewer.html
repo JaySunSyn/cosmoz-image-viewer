@@ -19,12 +19,14 @@
 			:host {
 				display: block;
 				position: relative;
+				height: 100%;
 				@apply --layout-vertical;
 			}
 
 			#imageContainer {
 				overflow-y: auto;
 				will-change: transform;
+				height: 100%;
 			}
 
 			iron-image {
@@ -51,6 +53,8 @@
 			}
 
 			skeleton-carousel {
+				min-height: 300px;
+
 				--skeleton-carousel-nav: {
 					background-color: rgba(0, 0, 0, 0.44);
 					color: rgba(255, 255, 255, 0.87);
@@ -104,7 +108,8 @@
 						<iron-image
 							on-click="showInvoiceImage"
 							placeholder="https://source.unsplash.com/category/nature/400x400"
-							data-src$="[[image]]">
+							data-src$="[[image]]"
+							sizing="cover">
 						</iron-image>
 					</div>
 				</template>

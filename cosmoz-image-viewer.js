@@ -18,8 +18,7 @@
 			currentImage: {
 				type: Object,
 				notify: true,
-				computed: '_computeCurrentImage(currentImageIndex, images)',
-				observer: '_currentImageChanged'
+				computed: '_computeCurrentImage(currentImageIndex, images)'
 			},
 			currentImageIndex: {
 				type: Number,
@@ -44,10 +43,6 @@
 				readOnly: true,
 				notify: true,
 				observer: '_detachedChanged'
-			},
-			imageLoaded: {
-				type: Boolean,
-				value: false
 			},
 			images: {
 				type: Array,
@@ -114,10 +109,6 @@
 
 		_onResize: function () {
 			this.set('_imageContainerHeight', this._scroller.scrollHeight);
-		},
-
-		_currentImageChanged: function () {
-			// this.set('imageLoaded', this.$.image.complete);
 		},
 
 		_computePage: function (index) {
@@ -231,7 +222,7 @@
 				window.history.replaceState(null, null, window.location.hash + '?');
 			}
 
-			new PhotoSwipe(element, PhotoSwipeUI_Default, items, {
+			var gallery = new PhotoSwipe(element, PhotoSwipeUI_Default, items, {
 				index: index || 0, // start at first slide
 				history: true, // disables unique URL for each slide.
 				preLoad: [1, 3], // Preloads one image before current image and three after.,
@@ -241,7 +232,71 @@
 				showAnimationDuration: 0,
 				showHideOpacity: false,
 				shareEl: false
-			}).init();
+			});
+
+			gallery.listen('gettingData', (index, slide) => {
+				if (slide.autoSize) {
+					// use setTimeout so that it runs in the event loop
+					this.async(() => {
+						this.getSlideDimensions(slide, gallery);
+					}, 300);
+				}
+			});
+
+			gallery.listen('imageLoadComplete', (index, slide) => {
+				if (slide.autoSize) {
+					this.getSlideDimensions(slide, gallery);
+				}
+			});
+
+			// gallery.listen('imageLoadComplete',
+			// function (index, item) {
+			// 	if (!item.img || !item.autoSize) {
+			// 		return;
+			// 	}
+			// 	var actualImageWidth = item.img.naturalWidth;
+			// 	var actualImageHeight = item.img.naturalHeight;
+
+			// 	// recalculate the fit ratio based on actual image dimensions instead of those which would have been specified in image collection
+			// 	// adapted from photoswipe.js:2743
+			// 	var viewportSize = gallery.viewportSize;
+			// 	var availableX = viewportSize.x;
+			// 	var availableY = viewportSize.y - item.vGap.top - item.vGap.bottom;
+
+			// 	var hRatio = availableX / actualImageWidth;
+			// 	var vRatio = availableY / actualImageHeight;
+
+			// 	item.fitRatio = hRatio < vRatio ? hRatio : vRatio;
+
+			// 	item.w = Math.round(actualImageWidth * item.fitRatio),
+			// 	item.h = Math.round(actualImageHeight * item.fitRatio),
+
+			// 	gallery.updateSize();
+			// });
+
+			gallery.init();
+		},
+
+		getSlideDimensions(slide, gallery) {
+			if (!slide.autoSize)				{
+				return;
+			}    // make sure we don't keep requesting the image if it doesn't exist etc.
+
+			var img = new Image();
+
+			img.onerror = () => {
+				slide.autoSize = false;
+			};
+
+			img.onload = () => {
+				slide.autoSize = false;
+				slide.w = img.naturalWidth;
+				slide.h = img.naturalHeight;
+				gallery.invalidateCurrItems();
+				gallery.updateSize(true);
+			};
+
+			img.src = slide.src;
 		},
 
 		scrollHandler: function () {
@@ -269,8 +324,9 @@
 			this.images.forEach(function (image) {
 				items.push({
 					src: this.resolveUrl(image),
-					w: 1105,
-					h: 1562
+					w: 5000,
+					h: 5000,
+					autoSize: true
 				});
 			}, this);
 			this.modalImageViewer(this._pswp, items, this.currentImageIndex);
