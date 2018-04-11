@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+	<title>cosmoz-image-viewer detached window test</title>
+
+	<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+	<script src="../../web-component-tester/browser.js"></script>
+	<script src="../../test-fixture/test-fixture-mocha.js"></script>
+
+	<link rel="import" href="../../test-fixture/test-fixture.html">
+	<link rel="import" href="../../iron-test-helpers/iron-test-helpers.html">
+
+	<link rel="import" href="../cosmoz-image-viewer.html">
+</head>
+<body>
+	<test-fixture id="cosmozImageViewer">
+		<template>
+			<cosmoz-image-viewer></cosmoz-image-viewer>
+		</template>
+	</test-fixture>
+	<test-fixture id="cosmozImageViewerTwo">
+		<template>
+			<cosmoz-image-viewer></cosmoz-image-viewer>
+		</template>
+	</test-fixture>
+
+	<script>
+	/*global sinon chai*/
+	(function () {
+		'use strict';
+
+		sinon.assert.expose(chai.assert, { prefix: '' });
+
+		suite('cosmoz-image-viewer', () => {
+			let imageViewer,
+				imageViewerTwo;
+
+			setup((done) => {
+				imageViewer = fixture('cosmozImageViewer');
+				imageViewerTwo = fixture('cosmozImageViewerTwo');
+
+				imageViewer.images = [
+					'../../demo/images/stockholm.jpg',
+					'../../demo/images/strasbourg.jpg',
+					'../../demo/images/cosmos1.jpg'
+				];
+
+				imageViewerTwo.images = [
+					'../../demo/images/stockholm.jpg',
+					'../../demo/images/strasbourg.jpg',
+					'../../demo/images/cosmos1.jpg'
+				];
+
+				Polymer.Base.async(() => {
+					done();
+				}, 100);
+			});
+
+			test('instantiating the elements works', () => {
+				assert.equal(imageViewer.is, 'cosmoz-image-viewer');
+				assert.equal(imageViewerTwo.is, 'cosmoz-image-viewer');
+			});
+
+			test('sharing detached window works', () => {
+				const w = imageViewer.detach();
+				assert.isOk(w);
+				const w2 = imageViewerTwo.detach();
+				assert.deepEqual(w2, w);
+				w.close();
+			});
+
+			test('detaching window works', (done) => {
+				const w = imageViewer.detach();
+				Polymer.Base.async(() => {
+					assert.equal(w.ciw.images.length, imageViewer.images.length);
+					done();
+				}, 1000);
+			});
+		});
+	}());
+
+	</script>
+</body>
+</html>
